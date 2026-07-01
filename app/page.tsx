@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { DocumentPane } from "@/components/workspace/DocumentPane";
+import { useRef, useState } from "react";
+import { DocumentPane, type HighlightTarget } from "@/components/workspace/DocumentPane";
 import { TABS, TabNav, type Tab } from "@/components/workspace/TabNav";
 import { ReviewPanel } from "@/components/review/ReviewPanel";
 import { DraftPanel } from "@/components/draft/DraftPanel";
@@ -20,12 +20,20 @@ export default function Workspace() {
   const [contract, setContract] = useState("");
   const [playbook, setPlaybook] = useState(SAMPLE_PLAYBOOK.standards);
   const [loadingSample, setLoadingSample] = useState(false);
+  const [highlight, setHighlight] = useState<HighlightTarget | null>(null);
+  const citeNonce = useRef(0);
 
   const active = TABS.find((t) => t.id === activeTab)!;
+
+  function citeInDocument(quote: string, offset?: number | null) {
+    citeNonce.current += 1;
+    setHighlight({ quote, offset, nonce: citeNonce.current });
+  }
 
   async function selectSample(id: string) {
     const sample = CONTRACT_SAMPLES.find((s) => s.id === id);
     if (!sample) return;
+    setHighlight(null);
     setLoadingSample(true);
     try {
       setContract(await loadSampleText(sample));
@@ -51,9 +59,13 @@ export default function Workspace() {
           contract={contract}
           samples={CONTRACT_SAMPLES}
           loadingSample={loadingSample}
+          highlight={highlight}
           onChange={setContract}
           onSelectSample={selectSample}
-          onClear={() => setContract("")}
+          onClear={() => {
+            setContract("");
+            setHighlight(null);
+          }}
         />
 
         <section className="flex flex-col gap-4">
@@ -76,7 +88,7 @@ export default function Workspace() {
                 }
               />
             )}
-            {activeTab === "ask" && <AskPanel contract={contract} />}
+            {activeTab === "ask" && <AskPanel contract={contract} onCite={citeInDocument} />}
           </div>
         </section>
       </div>

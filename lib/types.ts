@@ -54,6 +54,13 @@ export interface ReviewResult {
 export interface Citation {
   /** Quoted span from the contract that supports the answer. */
   quote: string;
+  /**
+   * Character offset of the verified quote in the contract, or null when it only
+   * matched after whitespace normalization (still verified, just not exactly
+   * locatable). Populated by server-side verification, so a rendered citation is
+   * always one we confirmed is really in the document.
+   */
+  offset?: number | null;
 }
 
 export interface AskResult {

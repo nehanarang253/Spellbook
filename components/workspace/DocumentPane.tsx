@@ -1,22 +1,93 @@
+"use client";
+
+import { useEffect, useMemo, useRef } from "react";
 import type { ContractSample } from "@/data/samples";
+
+/** A citation the Ask panel asked the document pane to reveal. */
+export interface HighlightTarget {
+  quote: string;
+  /** Exact offset from server-side verification, used as a fast/precise hint. */
+  offset?: number | null;
+  /** Bumped on every click so re-clicking the same citation re-scrolls. */
+  nonce: number;
+}
 
 interface DocumentPaneProps {
   contract: string;
   samples: ContractSample[];
   loadingSample: boolean;
+  highlight: HighlightTarget | null;
   onChange: (value: string) => void;
   onSelectSample: (id: string) => void;
   onClear: () => void;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Find the citation span in the current document text. Prefers the verified
+ * offset, falls back to an exact search, then to a whitespace-tolerant search so
+ * a quote still lands even if the user reflowed or lightly edited the contract.
+ */
+function locate(text: string, quote: string, hint?: number | null): [number, number] | null {
+  const q = quote.trim();
+  if (!q) return null;
+
+  if (typeof hint === "number" && hint >= 0 && text.substr(hint, q.length) === q) {
+    return [hint, hint + q.length];
+  }
+  const exact = text.indexOf(q);
+  if (exact !== -1) return [exact, exact + q.length];
+
+  const tokens = q.split(/\s+/).map(escapeRegExp).filter(Boolean);
+  if (!tokens.length) return null;
+  try {
+    const match = new RegExp(tokens.join("\\s+")).exec(text);
+    if (match) return [match.index, match.index + match[0].length];
+  } catch {
+    // A pathological quote produced an invalid pattern — just skip highlighting.
+  }
+  return null;
 }
 
 export function DocumentPane({
   contract,
   samples,
   loadingSample,
+  highlight,
   onChange,
   onSelectSample,
   onClear,
 }: DocumentPaneProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const lastNonce = useRef<number>(-1);
+
+  const span = useMemo(
+    () => (highlight ? locate(contract, highlight.quote, highlight.offset) : null),
+    [contract, highlight],
+  );
+
+  // On a new citation click, select the span and scroll it into view.
+  useEffect(() => {
+    if (!highlight || highlight.nonce === lastNonce.current) return;
+    lastNonce.current = highlight.nonce;
+    const textarea = textareaRef.current;
+    if (!textarea || !span) return;
+
+    const [start, end] = span;
+    textarea.focus();
+    textarea.setSelectionRange(start, end);
+
+    const mark = backdropRef.current?.querySelector("mark");
+    if (mark instanceof HTMLElement) {
+      textarea.scrollTop = Math.max(0, mark.offsetTop - textarea.clientHeight / 3);
+      if (backdropRef.current) backdropRef.current.scrollTop = textarea.scrollTop;
+    }
+  }, [highlight, span]);
+
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
@@ -53,16 +124,44 @@ export function DocumentPane({
         </div>
       </div>
 
-      <div className="relative flex-1">
+      <div className="relative min-h-[28rem] flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:border-slate-400">
+        {/* Highlight layer: same typography as the textarea, transparent text, so
+            only the <mark> background shows through behind the real text. */}
+        <div
+          ref={backdropRef}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words p-4 font-mono text-sm leading-relaxed text-transparent"
+        >
+          {span ? (
+            <>
+              {contract.slice(0, span[0])}
+              <mark className="rounded bg-yellow-200 text-transparent">
+                {contract.slice(span[0], span[1])}
+              </mark>
+              {contract.slice(span[1])}
+            </>
+          ) : (
+            contract
+          )}
+        </div>
+
         <textarea
           id="contract"
+          ref={textareaRef}
           value={contract}
           onChange={(e) => onChange(e.target.value)}
+          onScroll={(e) => {
+            if (backdropRef.current) {
+              backdropRef.current.scrollTop = e.currentTarget.scrollTop;
+              backdropRef.current.scrollLeft = e.currentTarget.scrollLeft;
+            }
+          }}
           placeholder="Paste a contract here, or load a sample to get started…"
-          className="min-h-[28rem] w-full flex-1 resize-none rounded-lg border border-slate-200 bg-white p-4 font-mono text-sm leading-relaxed shadow-sm focus:border-slate-400 focus:outline-none"
+          className="relative z-10 h-full min-h-[28rem] w-full resize-none whitespace-pre-wrap break-words bg-transparent p-4 font-mono text-sm leading-relaxed text-slate-800 outline-none"
         />
+
         {loadingSample && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/70 text-sm text-slate-500">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 text-sm text-slate-500">
             Loading contract…
           </div>
         )}

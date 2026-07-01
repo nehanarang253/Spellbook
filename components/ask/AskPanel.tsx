@@ -4,7 +4,13 @@ import { useState } from "react";
 import { requestAsk } from "@/lib/api-client";
 import type { AskResult } from "@/lib/types";
 
-export function AskPanel({ contract }: { contract: string }) {
+interface AskPanelProps {
+  contract: string;
+  /** Ask the document pane to reveal a cited span. */
+  onCite?: (quote: string, offset?: number | null) => void;
+}
+
+export function AskPanel({ contract, onCite }: AskPanelProps) {
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -70,12 +76,15 @@ export function AskPanel({ contract }: { contract: string }) {
                 Citations
               </p>
               {result.citations.map((c, i) => (
-                <blockquote
+                <button
                   key={i}
-                  className="border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs italic text-slate-600"
+                  type="button"
+                  onClick={() => onCite?.(c.quote, c.offset)}
+                  title="Show in document"
+                  className="border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-left text-xs italic text-slate-600 transition hover:border-yellow-400 hover:bg-yellow-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
                 >
                   {c.quote}
-                </blockquote>
+                </button>
               ))}
             </div>
           )}
