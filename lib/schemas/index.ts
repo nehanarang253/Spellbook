@@ -24,8 +24,25 @@ export const issueSchema = z.object({
   suggestedRedline: z.string(),
 });
 
-/** The model returns a bare object with an `issues` array (JSON mode needs an object root). */
+export const requiredClauseSchema = z.object({
+  requirement: z.string().min(1),
+  status: z.enum(["present", "partial", "missing"]),
+  note: z.string(),
+});
+
+/**
+ * The model returns an object root (JSON mode requires it) with a summary, the
+ * issue list, and a required-clauses checklist. The checklist makes the
+ * missing-clause pass explicit rather than relying on the model to volunteer it.
+ */
 export const reviewOutputSchema = z.object({
+  summary: z.string().min(1),
+  issues: z.array(issueSchema),
+  requiredClauses: z.array(requiredClauseSchema),
+});
+
+/** Second-pass gap catcher returns only the issues the first pass missed. */
+export const reviewGapOutputSchema = z.object({
   issues: z.array(issueSchema),
 });
 

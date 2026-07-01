@@ -14,6 +14,8 @@ export interface ChatMessage {
 export interface ChatOptions {
   model?: string;
   temperature?: number;
+  /** Cap on completion length. Raise it for exhaustive outputs like a full review. */
+  maxTokens?: number;
 }
 
 /** A typed error the API layer can translate into a safe `{ error }` envelope. */
@@ -36,6 +38,7 @@ export async function chat(
     const response = await getClient().chat.completions.create({
       model: options.model ?? DEFAULT_MODEL,
       temperature: options.temperature ?? 0.2,
+      max_tokens: options.maxTokens,
       messages,
     });
     const content = response.choices[0]?.message?.content;
@@ -61,6 +64,7 @@ export async function chatJSON<T>(
     const response = await getClient().chat.completions.create({
       model: options.model ?? DEFAULT_MODEL,
       temperature: options.temperature ?? 0.2,
+      max_tokens: options.maxTokens,
       response_format: { type: "json_object" },
       messages,
     });
