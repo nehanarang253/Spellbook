@@ -75,8 +75,7 @@ agent (an orchestration layer beyond a 48h prototype), the literal Word add-in
 (on the brief's do-not-build list).
 
 Full rationale — including how the workflows were chosen and what a single LLM call
-can and can't faithfully replicate — is in [`CLAUDE.md`](./CLAUDE.md) and
-[`skills.md`](./skills.md).
+can and can't faithfully replicate — is in [`CLAUDE.md`](./CLAUDE.md).
 
 ## Scripts
 

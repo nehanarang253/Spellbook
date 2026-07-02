@@ -47,11 +47,21 @@ export default function Workspace() {
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Spellbook</h1>
-        <p className="text-sm text-slate-500">
-          AI contract review, drafting, and grounded Q&amp;A for transactional lawyers.
-        </p>
+      <header className="flex flex-col gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Spellbook</h1>
+          <p className="text-sm text-slate-500">
+            An AI assistant for reviewing, writing, and answering questions about contracts.
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-600">
+          <span className="font-medium text-slate-800">New here?</span> Start by loading a
+          sample contract on the left. Then choose a tool on the right:{" "}
+          <span className="font-medium text-slate-700">Review</span> checks the contract against
+          your standards, <span className="font-medium text-slate-700">Draft</span> writes a new
+          clause for you, and <span className="font-medium text-slate-700">Ask</span> answers
+          questions about it. Nothing you paste is saved &mdash; it stays in this browser tab only.
+        </div>
       </header>
 
       <div className="grid flex-1 items-start gap-6 lg:grid-cols-2">

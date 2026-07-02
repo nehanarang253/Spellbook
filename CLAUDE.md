@@ -99,7 +99,7 @@ distinct LLM interaction patterns** (not three flavors of one call):
 - [ ] All model calls isolated behind one `lib/llm` module (provider-swappable).
 - [ ] Sample contract + sample playbook seeded so a reviewer can click through immediately.
 - [ ] `README.md` — setup, env vars, run commands (≤ 3), and a short "what/why" scope note.
-- [ ] `CLAUDE.md` (this file) and `skills.md` committed.
+- [ ] `CLAUDE.md` (this file) committed. (`skills.md` is kept local-only — see `.gitignore`.)
 - [ ] Clean commit history; no secrets committed (`.env.local` git-ignored, `.env.example` provided).
 
 ### Explicitly NOT building (per brief)

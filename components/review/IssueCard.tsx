@@ -1,5 +1,6 @@
 import type { Issue } from "@/lib/types";
 import { CategoryBadge, SeverityBadge } from "./SeverityBadge";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 export type IssueStatus = "open" | "accepted" | "dismissed";
 
@@ -36,13 +37,20 @@ export function IssueCard({ issue, status, onAccept, onDismiss, onReopen }: Issu
 
       {issue.sourceText && (
         <blockquote className="mt-3 border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs italic text-slate-600">
+          <span className="mb-1 block font-sans text-[10px] font-medium uppercase not-italic tracking-wide text-slate-400">
+            From the contract
+          </span>
           {issue.sourceText}
         </blockquote>
       )}
 
       <div className="mt-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+        <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
           Suggested redline
+          <InfoTip label="What is a redline" align="left">
+            Proposed replacement wording that resolves the issue. Copy it into your contract if
+            you agree — this prototype doesn&apos;t edit the document for you.
+          </InfoTip>
         </p>
         <p className="mt-1 whitespace-pre-wrap rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           {issue.suggestedRedline}
@@ -61,12 +69,14 @@ export function IssueCard({ issue, status, onAccept, onDismiss, onReopen }: Issu
           <>
             <button
               onClick={onAccept}
+              title="Mark this suggestion as accepted in your review"
               className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700"
             >
-              Accept redline
+              Accept
             </button>
             <button
               onClick={onDismiss}
+              title="Set this issue aside as reviewed"
               className="rounded-md border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100"
             >
               Dismiss

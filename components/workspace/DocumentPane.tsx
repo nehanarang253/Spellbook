@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import type { ContractSample } from "@/data/samples";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 /** A citation the Ask panel asked the document pane to reveal. */
 export interface HighlightTarget {
@@ -91,8 +92,12 @@ export function DocumentPane({
   return (
     <section className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor="contract" className="text-sm font-medium">
+        <label htmlFor="contract" className="flex items-center gap-1.5 text-sm font-medium">
           Contract
+          <InfoTip label="What goes here" align="left">
+            Paste your own contract, or load a sample to try the tools. You can edit the text
+            here at any time — the tools always work on what&apos;s currently shown.
+          </InfoTip>
         </label>
         <div className="flex items-center gap-2">
           <select
@@ -101,10 +106,10 @@ export function DocumentPane({
             onChange={(e) => {
               if (e.target.value) onSelectSample(e.target.value);
             }}
-            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 shadow-sm focus:border-slate-400 focus:outline-none"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-slate-400 focus:outline-none"
           >
             <option value="" disabled>
-              Load a sample…
+              ↓ Load a sample…
             </option>
             {samples.map((s) => (
               <option key={s.id} value={s.id}>
@@ -156,7 +161,7 @@ export function DocumentPane({
               backdropRef.current.scrollLeft = e.currentTarget.scrollLeft;
             }
           }}
-          placeholder="Paste a contract here, or load a sample to get started…"
+          placeholder="Paste a contract here, or use “Load a sample…” above to get started…"
           className="relative z-10 h-full min-h-[28rem] w-full resize-none whitespace-pre-wrap break-words bg-transparent p-4 font-mono text-sm leading-relaxed text-slate-800 outline-none"
         />
 
@@ -167,9 +172,14 @@ export function DocumentPane({
         )}
       </div>
 
-      <p className="text-xs text-slate-400">
-        The contract lives in session state only — nothing is persisted.
-      </p>
+      <div className="flex items-center justify-between gap-3 text-xs text-slate-400">
+        <span>Not saved anywhere — the contract stays in this browser tab and clears on reload.</span>
+        {contract.trim().length > 0 && (
+          <span className="shrink-0 tabular-nums">
+            {contract.trim().split(/\s+/).length.toLocaleString()} words
+          </span>
+        )}
+      </div>
     </section>
   );
 }

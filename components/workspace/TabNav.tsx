@@ -1,9 +1,23 @@
 export type Tab = "review" | "draft" | "ask";
 
 export const TABS: { id: Tab; label: string; blurb: string }[] = [
-  { id: "review", label: "Review", blurb: "Flag risky terms against a playbook." },
-  { id: "draft", label: "Draft", blurb: "Generate a clause from an instruction." },
-  { id: "ask", label: "Ask", blurb: "Grounded Q&A with citations." },
+  {
+    id: "review",
+    label: "Review",
+    blurb:
+      "Scan the contract for risky or one-sided terms, drafting mistakes, and missing clauses — each with a suggested fix you can accept or dismiss.",
+  },
+  {
+    id: "draft",
+    label: "Draft",
+    blurb: "Describe the clause you need in plain English and get drafted wording to insert.",
+  },
+  {
+    id: "ask",
+    label: "Ask",
+    blurb:
+      "Ask any question about the contract and get an answer backed by the exact wording it came from.",
+  },
 ];
 
 interface TabNavProps {
@@ -20,7 +34,7 @@ export function TabNav({ active, onChange }: TabNavProps) {
           role="tab"
           aria-selected={active === tab.id}
           onClick={() => onChange(tab.id)}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+          className={`flex-1 rounded-md px-3 py-2.5 text-sm font-medium transition ${
             active === tab.id
               ? "bg-white text-slate-900 shadow-sm"
               : "text-slate-500 hover:text-slate-700"

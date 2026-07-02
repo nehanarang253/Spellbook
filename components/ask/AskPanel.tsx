@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { requestAsk } from "@/lib/api-client";
 import type { AskResult } from "@/lib/types";
+import { InfoTip } from "@/components/ui/InfoTip";
+import { SuggestionChips } from "@/components/ui/SuggestionChips";
+
+const EXAMPLE_QUESTIONS = [
+  "What are the payment terms?",
+  "How can this agreement be terminated?",
+  "Who owns the intellectual property?",
+  "Is there a limit on liability?",
+];
 
 interface AskPanelProps {
   contract: string;
@@ -32,9 +41,14 @@ export function AskPanel({ contract, onCite }: AskPanelProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {!contract.trim() && (
+      {!contract.trim() ? (
         <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-500">
-          Paste or load a contract to ask questions about it.
+          Load or paste a contract on the left, then ask a question about it below.
+        </p>
+      ) : (
+        <p className="text-xs text-slate-400">
+          Answers come only from the loaded contract — not outside legal knowledge — so every
+          reply can be traced back to the text.
         </p>
       )}
 
@@ -60,6 +74,12 @@ export function AskPanel({ contract, onCite }: AskPanelProps) {
         </button>
       </form>
 
+      <SuggestionChips
+        label="Example questions:"
+        suggestions={EXAMPLE_QUESTIONS}
+        onPick={setQuestion}
+      />
+
       {error && (
         <p className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
@@ -72,8 +92,12 @@ export function AskPanel({ contract, onCite }: AskPanelProps) {
 
           {result.citations.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
                 Citations
+                <InfoTip label="About citations" align="left">
+                  The exact passages the answer is based on. Click one to highlight it in the
+                  contract on the left, so you can verify the answer against the source.
+                </InfoTip>
               </p>
               {result.citations.map((c, i) => (
                 <button
