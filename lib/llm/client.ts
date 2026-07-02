@@ -22,5 +22,19 @@ export function getClient(): OpenAI {
   return client;
 }
 
-/** Default model, overridable via env so the choice is not hard-coded in prompts. */
-export const DEFAULT_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
+/**
+ * Resolve the model for a request. `OPENAI_MODEL` (or a per-call override) wins;
+ * otherwise we default to OpenAI's `gpt-4o`. If a custom `OPENAI_BASE_URL` is set
+ * (a non-OpenAI provider) without a model, we fail loudly rather than silently
+ * sending an OpenAI model name the other endpoint won't recognize.
+ */
+export function resolveModel(override?: string): string {
+  const model = override ?? process.env.OPENAI_MODEL;
+  if (model) return model;
+  if (process.env.OPENAI_BASE_URL) {
+    throw new Error(
+      "OPENAI_MODEL must be set when OPENAI_BASE_URL points at a non-OpenAI endpoint.",
+    );
+  }
+  return "gpt-4o";
+}

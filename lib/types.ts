@@ -77,8 +77,6 @@ export interface DraftResult {
 // ── Seed data ───────────────────────────────────────────────────────────────
 
 export interface Playbook {
-  id: string;
-  name: string;
   /** Firm standards / preferred + fallback language injected into review. */
   standards: string;
 }

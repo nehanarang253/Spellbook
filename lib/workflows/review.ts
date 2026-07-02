@@ -46,8 +46,10 @@ export async function reviewContract(
       { role: "user", content: buildReviewUserPrompt(contract, playbook) },
     ],
     reviewOutputSchema,
-    // An exhaustive, section-by-section review with redlines is long; give it room.
-    { maxTokens: 8000 },
+    // An exhaustive, section-by-section review with redlines is long; give it
+    // headroom near gpt-4o's 16k output ceiling so a large contract's JSON isn't
+    // truncated mid-object (which would fail the whole review).
+    { maxTokens: 16000 },
   );
 
   // Second pass: hunt only for issues the first pass missed, then merge.
@@ -68,7 +70,13 @@ export async function reviewContract(
       reviewGapOutputSchema,
       { maxTokens: 6000 },
     );
-    const additions = gapIssues.filter((gi) => !isDuplicate(gi, merged));
+    // De-dupe each gap issue against the first pass *and* against gap issues
+    // already accepted this round, so two near-identical gap findings don't both
+    // survive.
+    const additions: Omit<Issue, "id">[] = [];
+    for (const gi of gapIssues) {
+      if (!isDuplicate(gi, merged) && !isDuplicate(gi, additions)) additions.push(gi);
+    }
     merged = [...merged, ...additions];
   } catch {
     // The gap pass is a recall booster, not load-bearing: if it fails, the

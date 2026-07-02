@@ -24,17 +24,25 @@ export function AskPanel({ contract, onCite }: AskPanelProps) {
   const [result, setResult] = useState<AskResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The contract the current answer/error was produced against. An answer and its
+  // citations are grounded in one specific document, so once the contract changes
+  // we treat the output as stale and stop showing it against new text.
+  const [outputContract, setOutputContract] = useState("");
 
   const canRun = contract.trim().length > 0 && question.trim().length > 0 && !loading;
+  const fresh = outputContract === contract;
 
   async function runAsk() {
+    const target = contract;
     setLoading(true);
     setError(null);
+    setResult(null);
     try {
-      setResult(await requestAsk(contract, question));
+      setResult(await requestAsk(target, question));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ask failed.");
     } finally {
+      setOutputContract(target);
       setLoading(false);
     }
   }
@@ -80,13 +88,13 @@ export function AskPanel({ contract, onCite }: AskPanelProps) {
         onPick={setQuestion}
       />
 
-      {error && (
+      {fresh && error && (
         <p className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
         </p>
       )}
 
-      {result && !loading && (
+      {fresh && result && !loading && (
         <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="whitespace-pre-wrap text-sm text-slate-800">{result.answer}</p>
 

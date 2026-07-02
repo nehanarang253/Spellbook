@@ -20,6 +20,7 @@ export default function Workspace() {
   const [contract, setContract] = useState("");
   const [playbook, setPlaybook] = useState(SAMPLE_PLAYBOOK.standards);
   const [loadingSample, setLoadingSample] = useState(false);
+  const [sampleError, setSampleError] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<HighlightTarget | null>(null);
   const citeNonce = useRef(0);
 
@@ -30,16 +31,23 @@ export default function Workspace() {
     setHighlight({ quote, offset, nonce: citeNonce.current });
   }
 
+  // Manual edits invalidate any citation offset, so clear the highlight when the
+  // user types — which also keeps the highlight lookup from re-running per keystroke.
+  function editContract(value: string) {
+    setContract(value);
+    setHighlight(null);
+  }
+
   async function selectSample(id: string) {
     const sample = CONTRACT_SAMPLES.find((s) => s.id === id);
     if (!sample) return;
     setHighlight(null);
+    setSampleError(null);
     setLoadingSample(true);
     try {
       setContract(await loadSampleText(sample));
-    } catch {
-      // Surface nothing destructive — a failed fetch just leaves the current text.
-      setContract((prev) => prev);
+    } catch (err) {
+      setSampleError(err instanceof Error ? err.message : "Could not load that sample.");
     } finally {
       setLoadingSample(false);
     }
@@ -69,12 +77,14 @@ export default function Workspace() {
           contract={contract}
           samples={CONTRACT_SAMPLES}
           loadingSample={loadingSample}
+          loadError={sampleError}
           highlight={highlight}
-          onChange={setContract}
+          onChange={editContract}
           onSelectSample={selectSample}
           onClear={() => {
             setContract("");
             setHighlight(null);
+            setSampleError(null);
           }}
         />
 

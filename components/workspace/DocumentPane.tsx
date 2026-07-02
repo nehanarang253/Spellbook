@@ -17,6 +17,8 @@ interface DocumentPaneProps {
   contract: string;
   samples: ContractSample[];
   loadingSample: boolean;
+  /** Message shown when a sample fails to load; null when there's nothing to report. */
+  loadError: string | null;
   highlight: HighlightTarget | null;
   onChange: (value: string) => void;
   onSelectSample: (id: string) => void;
@@ -57,6 +59,7 @@ export function DocumentPane({
   contract,
   samples,
   loadingSample,
+  loadError,
   highlight,
   onChange,
   onSelectSample,
@@ -100,9 +103,12 @@ export function DocumentPane({
           </InfoTip>
         </label>
         <div className="flex items-center gap-2">
+          {/* An action menu, not a state field: value is pinned to "" so it always
+              reads "Load a sample…" and re-picking the same sample fires onChange
+              (letting a cleared sample be reloaded). */}
           <select
             aria-label="Load a sample contract"
-            defaultValue=""
+            value=""
             onChange={(e) => {
               if (e.target.value) onSelectSample(e.target.value);
             }}
@@ -112,7 +118,7 @@ export function DocumentPane({
               ↓ Load a sample…
             </option>
             {samples.map((s) => (
-              <option key={s.id} value={s.id}>
+              <option key={s.id} value={s.id} title={s.description}>
                 {s.label}
               </option>
             ))}
@@ -128,6 +134,12 @@ export function DocumentPane({
           )}
         </div>
       </div>
+
+      {loadError && (
+        <p className="rounded-md bg-red-50 p-2 text-xs text-red-700" role="alert">
+          {loadError}
+        </p>
+      )}
 
       <div className="relative min-h-[28rem] flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm focus-within:border-slate-400">
         {/* Highlight layer: same typography as the textarea, transparent text, so

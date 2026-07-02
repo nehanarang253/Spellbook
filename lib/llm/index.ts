@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import { DEFAULT_MODEL, getClient } from "./client";
+import { getClient, resolveModel } from "./client";
 
 /**
  * Provider-agnostic LLM surface. Every workflow talks to the model through
@@ -29,27 +29,6 @@ export class LLMError extends Error {
   }
 }
 
-/** Plain text completion. */
-export async function chat(
-  messages: ChatMessage[],
-  options: ChatOptions = {},
-): Promise<string> {
-  try {
-    const response = await getClient().chat.completions.create({
-      model: options.model ?? DEFAULT_MODEL,
-      temperature: options.temperature ?? 0.2,
-      max_tokens: options.maxTokens,
-      messages,
-    });
-    const content = response.choices[0]?.message?.content;
-    if (!content) throw new LLMError("Model returned an empty response.");
-    return content;
-  } catch (error) {
-    if (error instanceof LLMError) throw error;
-    throw new LLMError("Chat completion failed.", error);
-  }
-}
-
 /**
  * JSON completion validated against a zod schema. Requests JSON mode, parses,
  * and validates before returning — callers get a typed value or an LLMError.
@@ -62,7 +41,7 @@ export async function chatJSON<T>(
   let raw: string;
   try {
     const response = await getClient().chat.completions.create({
-      model: options.model ?? DEFAULT_MODEL,
+      model: resolveModel(options.model),
       temperature: options.temperature ?? 0.2,
       max_tokens: options.maxTokens,
       response_format: { type: "json_object" },

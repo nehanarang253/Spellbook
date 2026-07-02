@@ -30,6 +30,7 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
     setLoading(true);
     setError(null);
     setInserted(false);
+    setClause(null);
     try {
       const result = await requestDraft(instruction, precedent || undefined, contract || undefined);
       setClause(result.clause);
@@ -41,7 +42,8 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
   }
 
   function insert() {
-    if (!clause) return;
+    // Guard against a second click appending the same clause twice.
+    if (!clause || inserted) return;
     onInsert(clause);
     setInserted(true);
   }
@@ -108,9 +110,10 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={insert}
-              className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+              disabled={inserted}
+              className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Insert into contract
+              {inserted ? "Inserted" : "Insert into contract"}
             </button>
             {inserted && <span className="text-xs font-medium text-emerald-600">Appended to the document</span>}
           </div>

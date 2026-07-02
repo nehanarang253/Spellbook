@@ -19,19 +19,27 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
+  // The contract the current result/error was produced against. A review
+  // describes one specific document, so once the contract changes (a new sample
+  // loaded, or the text edited) we treat the output as stale and stop showing it.
+  const [outputContract, setOutputContract] = useState("");
 
   const canRun = contract.trim().length > 0 && playbook.trim().length > 0 && !loading;
+  const fresh = outputContract === contract;
 
   async function runReview() {
+    const target = contract;
     setLoading(true);
     setError(null);
+    setResult(null);
     try {
-      const review = await requestReview(contract, playbook);
+      const review = await requestReview(target, playbook);
       setResult(review);
       setStatuses({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review failed.");
     } finally {
+      setOutputContract(target);
       setLoading(false);
     }
   }
@@ -86,7 +94,7 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
         </p>
       )}
 
-      {error && (
+      {fresh && error && (
         <p className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
         </p>
@@ -94,7 +102,7 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
 
       {loading && <p className="text-sm text-slate-500">Analyzing the contract against your playbook…</p>}
 
-      {result !== null && !loading && (
+      {fresh && result !== null && !loading && (
         <div className="flex flex-col gap-4">
           {result.summary && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
