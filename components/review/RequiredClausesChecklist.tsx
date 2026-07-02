@@ -1,4 +1,5 @@
 import type { RequiredClauseCheck, RequiredClauseStatus } from "@/lib/types";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 const STATUS_STYLES: Record<RequiredClauseStatus, { label: string; className: string; icon: string }> = {
   present: { label: "Present", className: "text-emerald-700 bg-emerald-50", icon: "✓" },
@@ -11,7 +12,13 @@ export function RequiredClausesChecklist({ checks }: { checks: RequiredClauseChe
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">Required-clause checklist</h3>
+      <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+        Required-clause checklist
+        <InfoTip label="About this checklist" align="left">
+          The clauses your playbook expects every contract to contain, and whether each one is
+          present, only partly covered, or missing.
+        </InfoTip>
+      </h3>
       <ul className="mt-3 flex flex-col gap-2">
         {checks.map((check, i) => {
           const style = STATUS_STYLES[check.status];

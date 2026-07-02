@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { requestDraft } from "@/lib/api-client";
+import { InfoTip } from "@/components/ui/InfoTip";
+import { SuggestionChips } from "@/components/ui/SuggestionChips";
+
+const EXAMPLE_INSTRUCTIONS = [
+  "Add a mutual confidentiality clause.",
+  "Draft a limitation-of-liability clause capped at fees paid in the last 12 months.",
+  "Write a 30-day termination-for-convenience clause for either party.",
+];
 
 interface DraftPanelProps {
   contract: string;
@@ -22,6 +30,7 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
     setLoading(true);
     setError(null);
     setInserted(false);
+    setClause(null);
     try {
       const result = await requestDraft(instruction, precedent || undefined, contract || undefined);
       setClause(result.clause);
@@ -33,7 +42,8 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
   }
 
   function insert() {
-    if (!clause) return;
+    // Guard against a second click appending the same clause twice.
+    if (!clause || inserted) return;
     onInsert(clause);
     setInserted(true);
   }
@@ -41,7 +51,7 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Instruction</span>
+        <span className="text-sm font-medium">Describe the clause you need</span>
         <textarea
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
@@ -50,9 +60,19 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
         />
       </label>
 
+      <SuggestionChips
+        label="Not sure what to write? Try one of these:"
+        suggestions={EXAMPLE_INSTRUCTIONS}
+        onPick={setInstruction}
+      />
+
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">
+        <span className="flex items-center gap-1.5 text-sm font-medium">
           Precedent language <span className="font-normal text-slate-400">(optional)</span>
+          <InfoTip label="What is precedent language" align="left">
+            Wording you already trust — from a past deal or your firm&apos;s template. Paste it
+            here and the new clause will follow its style and structure.
+          </InfoTip>
         </span>
         <textarea
           value={precedent}
@@ -61,6 +81,13 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
           className="min-h-[4rem] resize-y rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm focus:border-slate-400 focus:outline-none"
         />
       </label>
+
+      {contract.trim().length > 0 && (
+        <p className="text-xs text-slate-400">
+          The clause will be written to fit the contract loaded on the left — matching its
+          defined terms and style.
+        </p>
+      )}
 
       <button
         onClick={runDraft}
@@ -83,9 +110,10 @@ export function DraftPanel({ contract, onInsert }: DraftPanelProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={insert}
-              className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+              disabled={inserted}
+              className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Insert into contract
+              {inserted ? "Inserted" : "Insert into contract"}
             </button>
             {inserted && <span className="text-xs font-medium text-emerald-600">Appended to the document</span>}
           </div>

@@ -7,8 +7,6 @@ import type { Playbook } from "@/lib/types";
  * Party's perspective (the client we represent).
  */
 export const SAMPLE_PLAYBOOK: Playbook = {
-  id: "default-nda-playbook",
-  name: "NDA Playbook — Receiving Party Standards",
   standards: `We represent the RECEIVING PARTY. Review every clause from their perspective
 and flag terms that are unfavorable, one-sided, or non-standard.
 

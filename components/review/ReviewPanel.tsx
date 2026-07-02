@@ -5,6 +5,7 @@ import { requestReview } from "@/lib/api-client";
 import type { ReviewResult } from "@/lib/types";
 import { IssueCard, type IssueStatus } from "./IssueCard";
 import { RequiredClausesChecklist } from "./RequiredClausesChecklist";
+import { InfoTip } from "@/components/ui/InfoTip";
 
 interface ReviewPanelProps {
   contract: string;
@@ -18,19 +19,27 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPlaybook, setShowPlaybook] = useState(false);
+  // The contract the current result/error was produced against. A review
+  // describes one specific document, so once the contract changes (a new sample
+  // loaded, or the text edited) we treat the output as stale and stop showing it.
+  const [outputContract, setOutputContract] = useState("");
 
   const canRun = contract.trim().length > 0 && playbook.trim().length > 0 && !loading;
+  const fresh = outputContract === contract;
 
   async function runReview() {
+    const target = contract;
     setLoading(true);
     setError(null);
+    setResult(null);
     try {
-      const review = await requestReview(contract, playbook);
+      const review = await requestReview(target, playbook);
       setResult(review);
       setStatuses({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review failed.");
     } finally {
+      setOutputContract(target);
       setLoading(false);
     }
   }
@@ -41,13 +50,18 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => setShowPlaybook((v) => !v)}
-          className="text-xs font-medium text-slate-500 underline-offset-2 hover:underline"
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-500 underline-offset-2 hover:underline"
         >
           {showPlaybook ? "Hide playbook" : "Edit playbook"}
+          <InfoTip label="What is a playbook" align="left">
+            A playbook is your firm&apos;s standards — the terms you prefer and the ones you push
+            back on. The review is measured against it, so the results reflect your positions
+            instead of generic advice. A sample playbook is pre-loaded; edit it to match your firm.
+          </InfoTip>
         </button>
         <button
           onClick={runReview}
@@ -59,21 +73,28 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
       </div>
 
       {showPlaybook && (
-        <textarea
-          value={playbook}
-          onChange={(e) => onPlaybookChange(e.target.value)}
-          aria-label="Playbook standards"
-          className="min-h-[10rem] resize-y rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs shadow-sm focus:border-slate-400 focus:outline-none"
-        />
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs text-slate-500">
+            These are the standards the contract is checked against. Edit them to match your firm.
+          </p>
+          <textarea
+            value={playbook}
+            onChange={(e) => onPlaybookChange(e.target.value)}
+            aria-label="Playbook standards"
+            className="min-h-[10rem] resize-y rounded-lg border border-slate-200 bg-white p-3 font-mono text-xs shadow-sm focus:border-slate-400 focus:outline-none"
+          />
+        </div>
       )}
 
       {!contract.trim() && (
         <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-500">
-          Paste or load a contract to review it against the playbook.
+          Load or paste a contract on the left, then choose{" "}
+          <span className="font-medium text-slate-600">Run review</span> to check it against your
+          playbook.
         </p>
       )}
 
-      {error && (
+      {fresh && error && (
         <p className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
         </p>
@@ -81,7 +102,7 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
 
       {loading && <p className="text-sm text-slate-500">Analyzing the contract against your playbook…</p>}
 
-      {result !== null && !loading && (
+      {fresh && result !== null && !loading && (
         <div className="flex flex-col gap-4">
           {result.summary && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
@@ -100,9 +121,17 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              <p className="text-xs text-slate-400">
+              <p className="flex items-center gap-1.5 text-xs text-slate-400">
                 {result.issues.length} issue{result.issues.length === 1 ? "" : "s"} flagged, highest
                 severity first
+                <InfoTip label="What the labels mean" align="left">
+                  <span className="block font-semibold text-white">Severity</span>
+                  High = act before signing · Medium = worth negotiating · Low = minor.
+                  <span className="mt-1.5 block font-semibold text-white">Type</span>
+                  Aggressive term = one-sided against you · Drafting error = unclear or
+                  inconsistent wording · Missing clause = a protection your playbook expects
+                  but isn&apos;t present.
+                </InfoTip>
               </p>
               {result.issues.map((issue) => (
                 <IssueCard
