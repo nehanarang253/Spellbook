@@ -1,4 +1,4 @@
-import type { AskResult, DraftResult, Issue } from "@/lib/types";
+import type { AskResult, DraftResult, ReviewResult } from "@/lib/types";
 
 /**
  * Thin browser-side client for the workflow API routes. Centralizes the POST +
@@ -26,7 +26,7 @@ async function postJSON<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function requestReview(contract: string, playbook: string): Promise<{ issues: Issue[] }> {
+export function requestReview(contract: string, playbook: string): Promise<ReviewResult> {
   return postJSON("/api/review", { contract, playbook });
 }
 

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { requestReview } from "@/lib/api-client";
-import type { Issue } from "@/lib/types";
+import type { ReviewResult } from "@/lib/types";
 import { IssueCard, type IssueStatus } from "./IssueCard";
+import { RequiredClausesChecklist } from "./RequiredClausesChecklist";
 
 interface ReviewPanelProps {
   contract: string;
@@ -12,7 +13,7 @@ interface ReviewPanelProps {
 }
 
 export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPanelProps) {
-  const [issues, setIssues] = useState<Issue[] | null>(null);
+  const [result, setResult] = useState<ReviewResult | null>(null);
   const [statuses, setStatuses] = useState<Record<string, IssueStatus>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +25,8 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
     setLoading(true);
     setError(null);
     try {
-      const { issues } = await requestReview(contract, playbook);
-      setIssues(issues);
+      const review = await requestReview(contract, playbook);
+      setResult(review);
       setStatuses({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Review failed.");
@@ -80,27 +81,41 @@ export function ReviewPanel({ contract, playbook, onPlaybookChange }: ReviewPane
 
       {loading && <p className="text-sm text-slate-500">Analyzing the contract against your playbook…</p>}
 
-      {issues !== null && !loading && issues.length === 0 && (
-        <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
-          No issues flagged against the playbook.
-        </p>
-      )}
+      {result !== null && !loading && (
+        <div className="flex flex-col gap-4">
+          {result.summary && (
+            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Executive summary
+              </h3>
+              <p className="mt-1 text-sm text-slate-700">{result.summary}</p>
+            </section>
+          )}
 
-      {issues !== null && issues.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <p className="text-xs text-slate-400">
-            {issues.length} issue{issues.length === 1 ? "" : "s"} flagged
-          </p>
-          {issues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              status={statuses[issue.id] ?? "open"}
-              onAccept={() => setStatus(issue.id, "accepted")}
-              onDismiss={() => setStatus(issue.id, "dismissed")}
-              onReopen={() => setStatus(issue.id, "open")}
-            />
-          ))}
+          <RequiredClausesChecklist checks={result.requiredClauses} />
+
+          {result.issues.length === 0 ? (
+            <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">
+              No issues flagged against the playbook.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-slate-400">
+                {result.issues.length} issue{result.issues.length === 1 ? "" : "s"} flagged, highest
+                severity first
+              </p>
+              {result.issues.map((issue) => (
+                <IssueCard
+                  key={issue.id}
+                  issue={issue}
+                  status={statuses[issue.id] ?? "open"}
+                  onAccept={() => setStatus(issue.id, "accepted")}
+                  onDismiss={() => setStatus(issue.id, "dismissed")}
+                  onReopen={() => setStatus(issue.id, "open")}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

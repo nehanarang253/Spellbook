@@ -27,11 +27,40 @@ export interface Issue {
   suggestedRedline: string;
 }
 
+/** Outcome of checking one playbook-required clause against the contract. */
+export type RequiredClauseStatus = "present" | "partial" | "missing";
+
+export interface RequiredClauseCheck {
+  /** The requirement, restated from the playbook (e.g. "Confidentiality term with a clear end date"). */
+  requirement: string;
+  status: RequiredClauseStatus;
+  /** Where it was found, or why it's partial/missing. */
+  note: string;
+}
+
+/**
+ * Full Review output: a short summary, the severity-ordered issue list, and a
+ * checklist of the playbook's required clauses. The checklist forces an explicit
+ * present/partial/missing pass so required-but-absent clauses aren't silently skipped.
+ */
+export interface ReviewResult {
+  summary: string;
+  issues: Issue[];
+  requiredClauses: RequiredClauseCheck[];
+}
+
 // ── Ask (grounded Q&A) ──────────────────────────────────────────────────────
 
 export interface Citation {
   /** Quoted span from the contract that supports the answer. */
   quote: string;
+  /**
+   * Character offset of the verified quote in the contract, or null when it only
+   * matched after whitespace normalization (still verified, just not exactly
+   * locatable). Populated by server-side verification, so a rendered citation is
+   * always one we confirmed is really in the document.
+   */
+  offset?: number | null;
 }
 
 export interface AskResult {
